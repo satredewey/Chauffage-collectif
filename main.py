@@ -48,8 +48,6 @@ parser.add_argument('--do_display_temp', type=str2bool, default=True, required=F
 parser.add_argument('--display_max_temp', type=int, default=50, required=False)
 parser.add_argument('--display_min_temp', type=int, default=0, required=False)
 parser.add_argument('--do_limit_fps', type=str2bool, default=True, required=False)
-parser.add_argument('--do_load_data_from_file', type=str2bool, default=False, required=False)
-parser.add_argument('--load_data_file', type=str, default="data_to_load.json", required=False)
 
 
 args = parser.parse_args()
