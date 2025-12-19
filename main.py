@@ -1,5 +1,4 @@
 import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 import random
 import pygame
 import time
@@ -13,6 +12,7 @@ if platform.system().lower() == needed_os:
     import win32con # type: ignore
 import ctypes
 from ctypes import wintypes
+
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -91,6 +91,7 @@ if platform.system().lower() == needed_os:
 
 
 os.system("cls")
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 pygame.init()
 screen_info = pygame.display.Info()
@@ -113,7 +114,6 @@ if platform.system().lower() == needed_os:
     except Exception:
         pass
 pygame.display.set_caption("Chauffage collectif")
-# pygame.display.set_icon(pygame.image.load("icon.png"))
 window_height = screen.get_height()
 window_width = screen.get_width()
 clock = pygame.time.Clock()
