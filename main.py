@@ -48,6 +48,8 @@ parser.add_argument('--do_display_temp', type=str2bool, default=True, required=F
 parser.add_argument('--display_max_temp', type=int, default=50, required=False)
 parser.add_argument('--display_min_temp', type=int, default=0, required=False)
 parser.add_argument('--do_limit_fps', type=str2bool, default=True, required=False)
+parser.add_argument('--load_data_from_file', type=str2bool, default=False, required=False)
+parser.add_argument('--data_load_name', type=str, default="default_state.json", required=False)
 
 
 args = parser.parse_args()
@@ -238,7 +240,40 @@ def iterate():
     global height, width, all_data, clock, screen, running, grid, iterations, iterations_per_cycle, iterations_counts, simulating, start_position_height, start_position_width, mouse_value, actual_time
     iterations_counts += 1
     iterations = 0
-    grid = [[random.randint(0, 255) for l in range(int(height))] for c in range(int(width))]
+    if args.load_data_from_file == True:
+        with open(args.data_load_name, 'r', encoding='utf-8') as f:
+            loaded_data = json.load(f)
+        if isinstance(loaded_data, dict):
+            if "initial_grid" in loaded_data:
+                grid = loaded_data["initial_grid"]
+            elif "grid" in loaded_data:
+                grid = loaded_data["grid"]
+            else:
+                raise ValueError(f"Le fichier JSON '{args.data_load_name}' ne contient pas de grille attendue.")
+        elif isinstance(loaded_data, list):
+            if len(loaded_data) == 1 and isinstance(loaded_data[0], list):
+                grid = loaded_data[0]
+            else:
+                grid = loaded_data
+        else:
+            raise ValueError(f"Format JSON inattendu dans '{args.data_load_name}' pour la grille.")
+    if isinstance(grid, list) and len(grid) > 0 and isinstance(grid[0], list):
+        rows = len(grid)
+        cols = len(grid[0])
+        if rows == height and cols == width:
+            grid = [[grid[r][c] for r in range(rows)] for c in range(cols)]
+        elif rows == width and cols == height:
+            pass
+        else:
+            grid = [[grid[r][c] for r in range(rows)] for c in range(cols)]
+            width = cols
+            height = rows
+            try:
+                screen = pygame.display.set_mode((width * pixel_size, height * pixel_size), pygame.RESIZABLE)
+            except Exception:
+                pass
+    else:
+        grid = [[random.randint(0, 255) for l in range(int(height))] for c in range(int(width))]
     grid_list = []
     actual_time = 0
     update_display()
