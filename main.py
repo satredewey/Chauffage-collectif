@@ -32,7 +32,7 @@ parser.add_argument('--height', type=int, default=30, required=True)
 parser.add_argument('--width', type=int, default=40, required=True)
 parser.add_argument('--pixel_size', type=int, default=25, required=False)
 parser.add_argument('--do_auto_resize_pixels', type=str2bool, default=True, required=False)
-parser.add_argument('--iternations_per_cycle', type=int, default=25, required=False)
+parser.add_argument('--iterations_per_cycle', type=int, default=25, required=False)
 parser.add_argument('--max_iteration', type=int, default=10, required=False)
 parser.add_argument('--do_wait_time', type=str2bool, default=True, required=False)
 parser.add_argument('--wait_time', type=int, default=2, required=False)
@@ -56,7 +56,7 @@ width = args.width
 height = args.height
 pixel_size = args.pixel_size
 
-iterations_per_cycle = args.iternations_per_cycle
+iterations_per_cycle = args.iterations_per_cycle
 iterations_counts = 0
 iterations = 0
 max_iternation = args.max_iteration
@@ -126,7 +126,7 @@ all_data = {
         "height": copy.deepcopy(height),
         "width": copy.deepcopy(width),
         "pixel_size": copy.deepcopy(pixel_size),
-        "iternations_per_cycle": copy.deepcopy(iterations_per_cycle),
+        "iterations_per_cycle": copy.deepcopy(iterations_per_cycle),
         "max_iteration": copy.deepcopy(max_iternation),
         "do_auto_resize_pixels": copy.deepcopy(args.do_auto_resize_pixels),
         "do_wait_time": copy.deepcopy(args.do_wait_time),
@@ -409,8 +409,6 @@ while True:
 
 print("\n\nLibération de la mémoire...")
 for var in list(globals().keys()):
-    if not var.startswith("__") and var not in ("time", "sys"):
+    if not var.startswith("__") and var not in ("sys"):
         del globals()[var]
-        time.sleep(0.025)
-time.sleep(0.5)
 print("Arrêt...")

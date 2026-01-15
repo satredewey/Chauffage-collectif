@@ -7,12 +7,12 @@ python main.py ^
 --width 50 ^
 --pixel_size 25 ^
 --do_auto_resize_pixels True ^
---iternations_per_cycle 50 ^
+--iterations_per_cycle 5000 ^
 --max_iteration 1 ^
 --do_wait_time True ^
 --wait_time 2 ^
 --do_limit_fps True ^
---fps 5 ^
+--fps 50 ^
 --do_ident True ^
 --ident_size_spaces 4 ^
 --data_save_name "data.json" ^
@@ -21,5 +21,5 @@ python main.py ^
 --do_gray_colors False ^
 --do_display_temp True ^
 --display_temp_precision 2 ^
---display_max_temp 35 ^
+--display_max_temp 255 ^
 --display_min_temp 0
