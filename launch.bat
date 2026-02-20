@@ -7,9 +7,9 @@ python main.py ^
 --width 4 ^
 --pixel_size 25 ^
 --do_auto_resize_pixels True ^
---iterations_per_cycle 50 ^
+--iterations_per_cycle 2000 ^
 --max_iteration 5 ^
---do_wait_time True ^
+--do_wait_time False ^
 --wait_time 2 ^
 --do_limit_fps False ^
 --fps 50 ^

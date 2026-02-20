@@ -160,12 +160,12 @@ def update_display():
             )
     pygame.display.flip()
 
-def update():
+def update() -> list:
     '''
     Met à jour la grille en calculant la nouvelle valeur de chaque cellule en fonction de la moyenne des valeurs de ses voisins immédiats.
     '''
     global grid, width, height
-    grid_temp = grid
+    grid_temp = [row[:] for row in grid]
     for l in range(height):
         for c in range(width):
             if 0 < c < width - 1 and 0 < l < height - 1:
@@ -193,7 +193,10 @@ def format_seconds(seconds: float) -> str:
         return f"{mins:d}m {secs:02d}s"
     return f"{secs:d}s"
 
-def display_caption_with_fixed_percentage():
+def display_caption_with_fixed_percentage() -> str:
+    '''
+    Affiche le titre de la fenêtre Pygame avec des informations sur le cycle en cours, les itérations, les pourcentages d'avancement, la température du pixel sous la souris et si la simulation est en pause ou non.
+    '''
     global iterations, iterations_per_cycle, args, simulating, mouse_value, iterations_counts
     iteration_display = (iterations - 1) if iterations > 0 else 0
     if args.do_display_percentage:
@@ -217,7 +220,15 @@ def display_caption_with_fixed_percentage():
     caption = f"Chauffage collectif - Cycle {iterations_counts} / {args.max_iteration} - Itération {iteration_display} / {iterations_per_cycle} {percentage_str} {pixel_text} {paused_text}"
     return caption
 
-def check_json_is_valid(json_file):
+def check_json_is_valid(json_file: str) -> tuple[bool, str]:
+    '''
+    Check whether a JSON file is valid.
+
+    The function tries to load the given JSON file and returns a tuple
+    ``(is_valid, error_message)`` where ``is_valid`` is a boolean indicating
+    whether the JSON is valid and ``error_message`` contains a description of
+    the error if it is not valid, or a success message otherwise.
+    '''
     try:
         with open(json_file, 'r', encoding='utf-8') as f:
             json.load(f)
@@ -227,6 +238,16 @@ def check_json_is_valid(json_file):
     except FileNotFoundError as e:
         return False, e
 
+def save_data():
+    '''Sauvegarde les données de la simulation dans un fichier JSON, en utilisant une indentation si spécifiée dans les arguments.'''
+    global args, all_data, json
+    os.system(f"del {args.data_save_name}")
+
+    with open(f"{args.data_save_name}", "w") as f:
+        if args.do_ident == True:
+            json.dump(obj=all_data, indent=int(args.ident_size_spaces), fp=f)
+        elif args.do_ident == False:
+            json.dump(obj=all_data, fp=f)
 
 
 
@@ -383,21 +404,12 @@ all_data["genral_info"]["total_time"]["time_s"] = copy.deepcopy((total_time_ns /
 all_data["genral_info"]["total_iterations"] = copy.deepcopy(total_iterations)
 all_data["genral_info"]["total_iterations_per_seconds"] = copy.deepcopy(total_iterations_per_seconds)
 
-def save_data():
-    global args, all_data, json
-    os.system(f"del {args.data_save_name}")
 
-    with open(f"{args.data_save_name}", "w") as f:
-        if args.do_ident == True:
-            json.dump(obj=all_data, indent=int(args.ident_size_spaces), fp=f)
-        elif args.do_ident == False:
-            json.dump(obj=all_data, fp=f)
 
 save_data()
 
 print("\n\n")
 while True:
-    time.sleep(0.5)
     json_save_status = check_json_is_valid(json_file=str(args.data_save_name))
     if json_save_status[0] == True:
         print(f"Données correctement sauvegardées dans '{os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data_save_name)}'.")
@@ -405,6 +417,7 @@ while True:
     else:
         print("Erreur lors de la sauvegarde :")
         print(json_save_status[1])
+        time.sleep(0.5)
         save_data()
 
 
