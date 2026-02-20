@@ -372,8 +372,9 @@ print(f"    Données sauvegardées dans le fichier : '{args.data_save_name}'.")
 print(f"    Itérations totales effectuées : {total_iterations}.")
 print(f"    Temps total écoulé : {round((total_time_ns / 1_000_000_000), 2):.2f}s.")
 print(f"    Itérations totales /s : {round(total_iterations_per_seconds, 2):.2f}")
-print(f"        Objectif : {args.fps:.2f} itérations /s.")
-print(f"        Ecart : {abs(round(total_iterations_per_seconds - args.fps, 2)):.2f} itérations /s.")
+if args.do_limit_fps == True:
+    print(f"        Objectif : {args.fps:.2f} itérations /s.")
+    print(f"        Ecart : {abs(round(total_iterations_per_seconds - args.fps, 2)):.2f} itérations /s.")
 print(f"    Taille de la grille : {width} x {height} pixels.")
 
 
