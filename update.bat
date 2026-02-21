@@ -1,3 +1,5 @@
+git pull
+
 call "venv/Scripts/activate.bat"
 
 pip install --upgrade -r requirements.txt
