@@ -118,6 +118,8 @@ window_height = screen.get_height()
 window_width = screen.get_width()
 clock = pygame.time.Clock()
 screen_refresh_rate = pygame.display.get_current_refresh_rate()
+if not screen_refresh_rate or screen_refresh_rate <= 0:
+    screen_refresh_rate = 60
 print(f"Screen refresh rate: {screen_refresh_rate}Hz")
 running = True
 simulating = True
@@ -303,12 +305,14 @@ def iterate():
 
             iterations += 1
 
-            if dt > 1 / screen_refresh_rate:
+            now = time.monotonic_ns()
+            dt += (now - last_screen_update_time) / 1_000_000_000
+            last_screen_update_time = now
+
+            if dt >= 1 / screen_refresh_rate:
                 update_display()
                 dt = 0
-                last_screen_update_time = time.monotonic_ns()
-            else:
-                dt += (time.monotonic_ns() - last_screen_update_time) / 1_000_000_000
+
             grid = update()
             grid_list.append(copy.deepcopy(grid))
 
