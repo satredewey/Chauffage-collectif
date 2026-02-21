@@ -7,7 +7,7 @@ python main.py ^
 --width 4 ^
 --pixel_size 25 ^
 --do_auto_resize_pixels True ^
---iterations_per_cycle 2000 ^
+--iterations_per_cycle 20000 ^
 --max_iteration 5 ^
 --do_wait_time False ^
 --wait_time 2 ^
@@ -22,4 +22,6 @@ python main.py ^
 --do_display_temp True ^
 --display_temp_precision 2 ^
 --display_max_temp 255 ^
---display_min_temp 0
+--display_min_temp 0 ^
+--do_limit_display_fps_to_screen_fps False ^
+--display_fps 60

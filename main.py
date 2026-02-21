@@ -48,6 +48,8 @@ parser.add_argument('--do_display_temp', type=str2bool, default=True, required=F
 parser.add_argument('--display_max_temp', type=int, default=50, required=False)
 parser.add_argument('--display_min_temp', type=int, default=0, required=False)
 parser.add_argument('--do_limit_fps', type=str2bool, default=True, required=False)
+parser.add_argument('--do_limit_display_fps_to_screen_fps', type=str2bool, default=True, required=False)
+parser.add_argument('--display_fps', type=float, default=30, required=False)
 
 args = parser.parse_args()
 
@@ -117,10 +119,10 @@ pygame.display.set_caption("Chauffage collectif")
 window_height = screen.get_height()
 window_width = screen.get_width()
 clock = pygame.time.Clock()
-screen_refresh_rate = pygame.display.get_current_refresh_rate()
+screen_refresh_rate = pygame.display.get_current_refresh_rate() if args.do_limit_display_fps_to_screen_fps == True else args.display_fps
 if not screen_refresh_rate or screen_refresh_rate <= 0:
     screen_refresh_rate = 60
-print(f"Screen refresh rate: {screen_refresh_rate}Hz")
+print(f"Screen refresh rate: {screen_refresh_rate}Hz \n")
 running = True
 simulating = True
 
@@ -136,6 +138,8 @@ all_data = {
         "do_wait_time": copy.deepcopy(args.do_wait_time),
         "wait_time": copy.deepcopy(wait_time),
         "fps": copy.deepcopy(args.fps),
+        "do_limit_display_fps_to_screen_fps": copy.deepcopy(args.do_limit_display_fps_to_screen_fps),
+        "display_fps": copy.deepcopy(args.display_fps),
         "total_time": {
             "time_ns": 0,
             "time_s": 0
