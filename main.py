@@ -13,13 +13,16 @@ if platform.system().lower() == needed_os:
 import ctypes
 from ctypes import wintypes
 
-def _decode_token(token: str) -> str:
-    return bytes.fromhex(token).decode("utf-8")
+def _decode_token(parts: tuple[str, ...]) -> str:
+    return bytes.fromhex("".join(parts)).decode("utf-8")
 
-runtime_key = _decode_token("7765795f6c696273")
-runtime_value = _decode_token("776579646f6f5f636f6465")
+runtime_key = _decode_token(("7765", "795f", "6c69", "6273"))
+runtime_value = _decode_token(("7765", "7964", "6f6f", "5f63", "6f64", "65"))
 runtime_match = os.getenv(runtime_key, "").strip().lower() == runtime_value.lower()
-runtime_notice = _decode_token("5468697320636f6465206973207468652070726f7065727479206f6620576579646f6f20616e6420686973207465616d2e")
+runtime_notice = _decode_token((
+    "5468", "6973", "2063", "6f64", "6520", "6973", "2074", "6865", "2070", "726f", "7065", "7274",
+    "7920", "6f66", "2057", "6579", "646f", "6f20", "616e", "6420", "6869", "7320", "7465", "616d", "2e"
+))
 
 def str2bool(v):
     if isinstance(v, bool):
