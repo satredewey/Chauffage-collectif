@@ -26,7 +26,7 @@ def str2bool(v):
 
 
 parser = argparse.ArgumentParser(
-                    prog='Chauffage Collaectif',
+                    prog='Chauffage Collectif',
                     description='Simulate Chauffage Collectif')
 parser.add_argument('--height', type=int, default=30, required=True)
 parser.add_argument('--width', type=int, default=40, required=True)
@@ -61,7 +61,7 @@ pixel_size = args.pixel_size
 iterations_per_cycle = args.iterations_per_cycle
 iterations_counts = 0
 iterations = 0
-max_iternation = args.max_iteration
+max_iteration = args.max_iteration
 
 wait_time = args.wait_time
 actual_time = 0.000
@@ -134,12 +134,12 @@ simulating = True
 
 
 all_data = {
-    "genral_info":{
+    "general_info":{
         "height": copy.deepcopy(height),
         "width": copy.deepcopy(width),
         "pixel_size": copy.deepcopy(pixel_size),
         "iterations_per_cycle": copy.deepcopy(iterations_per_cycle),
-        "max_iteration": copy.deepcopy(max_iternation),
+        "max_iteration": copy.deepcopy(max_iteration),
         "do_auto_resize_pixels": copy.deepcopy(args.do_auto_resize_pixels),
         "do_wait_time": copy.deepcopy(args.do_wait_time),
         "wait_time": copy.deepcopy(wait_time),
@@ -155,23 +155,34 @@ all_data = {
     }
 }
 
+gray_color_lookup = [(i, i, i) for i in range(256)]
+heat_color_lookup = [(i, 0, 255 - i) for i in range(256)]
+
 def update_display(initial: bool = False) -> None:
     '''
     Met à jour l'affichage de la grille sur l'écran Pygame.
     '''
     global width, height, screen, grid, window_height, window_width, pixel_size, start_position_height, start_position_width
+    global gray_color_lookup, heat_color_lookup
     start_position_height = (window_height - (height * pixel_size)) // 2
     start_position_width = (window_width - (width * pixel_size)) // 2
     if initial == True:
         screen.fill(color=(255, 255, 255))
-    for l in range(1 if initial == True else 0, (height - 1) if initial == True else height):
-        for c in range(1 if initial == True else 0, (width - 1) if initial == True else width):
-            color = (grid[c][l], grid[c][l], grid[c][l]) if args.do_gray_colors == True else (grid[c][l], 0, 255 - grid[c][l])
-            pygame.draw.rect(
-                surface=screen,
-                color=color,
-                rect=(start_position_width + c*pixel_size, start_position_height + l*pixel_size, pixel_size, pixel_size)
-            )
+    color_lookup = gray_color_lookup if args.do_gray_colors == True else heat_color_lookup
+    start_l = 1 if initial == True else 0
+    end_l = (height - 1) if initial == True else height
+    start_c = 1 if initial == True else 0
+    end_c = (width - 1) if initial == True else width
+    draw_rect = pygame.draw.rect
+    surface = screen
+    ps = pixel_size
+    y = start_position_height + (start_l * ps)
+    for l in range(start_l, end_l):
+        x = start_position_width + (start_c * ps)
+        for c in range(start_c, end_c):
+            draw_rect(surface, color_lookup[int(grid[c][l])], (x, y, ps, ps))
+            x += ps
+        y += ps
     pygame.display.flip()
 
 def update() -> list:
@@ -179,16 +190,20 @@ def update() -> list:
     Met à jour la grille en calculant la nouvelle valeur de chaque cellule en fonction de la moyenne des valeurs de ses voisins immédiats.
     '''
     global grid, width, height
-    grid_temp = [row[:] for row in grid]
-    for l in range(1, height - 1):
-        for c in range(1, width - 1):
-            temp = 0
-            temp += grid[c - 1][l]
-            temp += grid[c + 1][l]
-            temp += grid[c][l - 1]
-            temp += grid[c][l + 1]
-            temp /= 4
-            grid_temp[c][l] = temp
+    source_grid = grid
+    grid_temp = [column[:] for column in source_grid]
+    for c in range(1, width - 1):
+        left_column = source_grid[c - 1]
+        center_column = source_grid[c]
+        right_column = source_grid[c + 1]
+        target_column = grid_temp[c]
+        for l in range(1, height - 1):
+            target_column[l] = (
+                left_column[l]
+                + right_column[l]
+                + center_column[l - 1]
+                + center_column[l + 1]
+            ) * 0.25
     return grid_temp
 
 def format_seconds(seconds: float) -> str:
@@ -258,20 +273,17 @@ def save_data():
     global args, all_data, json
     if args.do_save_data == False:
         return
-    os.system(f"del {args.data_save_name}")
+    os.remove(args.data_save_name) if os.path.exists(args.data_save_name) else None
 
     with open(f"{args.data_save_name}", "w") as f:
-        if args.do_ident == True:
-            json.dump(obj=all_data, indent=int(args.ident_size_spaces), fp=f)
-        elif args.do_ident == False:
-            json.dump(obj=all_data, fp=f)
+        json.dump(obj=all_data, indent=int(args.ident_size_spaces) if args.ident_size_spaces else None, fp=f)
 
 
 
 
 def iterate():
     '''
-    Fonction completant une itération complète de la simulation, incluant la mise à jour de l'affichage et le stockage des données.
+    Fonction complétant une itération complète de la simulation, incluant la mise à jour de l'affichage et le stockage des données.
     '''
     global height, width, all_data, clock, screen, running, grid, iterations, iterations_per_cycle, iterations_counts, simulating, start_position_height, start_position_width, mouse_value, actual_time
     iterations_counts += 1
@@ -296,7 +308,7 @@ def iterate():
         },
         "iterations_per_seconds": 0,
         "grid_average_final": {
-            "boders": 0,
+            "borders": 0,
             "interior": 0,
             "difference": 0
         },
@@ -306,7 +318,7 @@ def iterate():
     cycle_start_time = time.monotonic_ns()
     dt = 0
     last_screen_update_time = time.monotonic_ns()
-    while (iterations < (iterations_per_cycle)) and (running == True):
+    while iterations < iterations_per_cycle and running == True:
         if simulating == True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -334,7 +346,7 @@ def iterate():
             current_data["iterations"] = iterations
 
             if args.do_save_data == True:
-                grid_list.append(copy.deepcopy(grid))
+                grid_list.append([col[:] for col in grid])
                 current_data["grid_list"] = grid_list
 
             if args.do_limit_fps == True:
@@ -354,7 +366,7 @@ def iterate():
                         update_display()
                         grid = update()
                         if args.do_save_data == True:
-                            grid_list.append(copy.deepcopy(grid))
+                            grid_list.append([col[:] for col in grid])
 
             cursor_position = pygame.mouse.get_pos()
             cursor_positioned_x = (cursor_position[0] - start_position_width) // pixel_size
@@ -373,26 +385,26 @@ def iterate():
     print(f"Cycle {iterations_counts}:")
     print(f"    Itérations effectuées : {iterations}.")
     print(f"    Temps écoulé : {round((actual_time / 1_000_000_000), 2)}s.")
-    print(f"    Itération /s: {round(iterations / (actual_time / 1_000_000_000), 2)}")
+    print(f"    Itérations /s : {round(iterations / (actual_time / 1_000_000_000), 2)}")
 
     iteration_data_name = f"iteration_{iterations_counts}"
     current_data["time"]["time_ns"] = copy.deepcopy(actual_time)
     current_data["time"]["time_s"] = copy.deepcopy((actual_time / 1_000_000_000))
     current_data["iterations_per_seconds"] = copy.deepcopy(float(f"{(round((iterations / (actual_time / 1_000_000_000)), 50)):.10f}"))
-    boders_total = 0
+    borders_total = 0
     for l in range(height):
         for c in range(width):
             if l == 0 or l == (height - 1) or c == 0 or c == (width - 1):
-                boders_total += grid[c][l]
+                borders_total += grid[c][l]
     borders_count = (2 * width) + (2 * (height - 2))
-    borders_average = boders_total / borders_count
+    borders_average = borders_total / borders_count
     interior_total = 0
     for l in range(1, height - 1):
         for c in range(1, width - 1):
             interior_total += grid[c][l]
     interior_count = (width - 2) * (height - 2)
     interior_average = interior_total / interior_count
-    current_data["grid_average_final"]["boders"] = copy.deepcopy(borders_average)
+    current_data["grid_average_final"]["borders"] = copy.deepcopy(borders_average)
     current_data["grid_average_final"]["interior"] = copy.deepcopy(interior_average)
     current_data["grid_average_final"]["difference"] = copy.deepcopy(abs(borders_average - interior_average))
     print(f"    Température moyenne bordures : {round(borders_average, 2)}°C.")
@@ -400,7 +412,7 @@ def iterate():
     print(f"    Différence de température : {round(abs(borders_average - interior_average), 2)}°C.\n")
     all_data[iteration_data_name] = current_data
 
-while (iterations_counts <= (max_iternation - 1)) and (running == True):
+while (iterations_counts <= (max_iteration - 1)) and (running == True):
     iterate()
 
 pygame.quit()
@@ -431,10 +443,10 @@ if args.do_limit_fps == True:
 print(f"    Taille de la grille : {width} x {height} pixels.")
 
 
-all_data["genral_info"]["total_time"]["time_ns"] = copy.deepcopy(total_time_ns)
-all_data["genral_info"]["total_time"]["time_s"] = copy.deepcopy((total_time_ns / 1_000_000_000))
-all_data["genral_info"]["total_iterations"] = copy.deepcopy(total_iterations)
-all_data["genral_info"]["total_iterations_per_seconds"] = copy.deepcopy(total_iterations_per_seconds)
+all_data["general_info"]["total_time"]["time_ns"] = copy.deepcopy(total_time_ns)
+all_data["general_info"]["total_time"]["time_s"] = copy.deepcopy((total_time_ns / 1_000_000_000))
+all_data["general_info"]["total_iterations"] = copy.deepcopy(total_iterations)
+all_data["general_info"]["total_iterations_per_seconds"] = copy.deepcopy(total_iterations_per_seconds)
 
 
 
@@ -450,8 +462,7 @@ while True:
         print(f"Données correctement sauvegardées dans '{os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data_save_name)}'.")
         break
     else:
-        print("Erreur lors de la sauvegarde :")
-        print(json_save_status[1])
+        print(f"Erreur lors de la sauvegarde : {json_save_status[1]}")
         time.sleep(0.5)
         save_data()
 
