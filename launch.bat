@@ -1,5 +1,7 @@
 call "venv/Scripts/activate.bat"
 
+set "wey_libs=weydoo_code"
+
 cls
 
 python main.py ^
