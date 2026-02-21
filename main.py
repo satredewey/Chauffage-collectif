@@ -49,7 +49,6 @@ parser.add_argument('--display_max_temp', type=int, default=50, required=False)
 parser.add_argument('--display_min_temp', type=int, default=0, required=False)
 parser.add_argument('--do_limit_fps', type=str2bool, default=True, required=False)
 
-
 args = parser.parse_args()
 
 width = args.width
@@ -95,6 +94,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 pygame.init()
 screen_info = pygame.display.Info()
+
 if args.do_auto_resize_pixels and platform.system().lower() == needed_os:
     available_width, available_height = get_work_area()
     hor_dec, ver_dec = get_window_draw_size()
@@ -117,6 +117,8 @@ pygame.display.set_caption("Chauffage collectif")
 window_height = screen.get_height()
 window_width = screen.get_width()
 clock = pygame.time.Clock()
+screen_refresh_rate = pygame.display.get_current_refresh_rate()
+print(f"Screen refresh rate: {screen_refresh_rate}Hz")
 running = True
 simulating = True
 
@@ -151,7 +153,6 @@ def update_display():
     screen.fill(color=(255, 255, 255))
     for l in range(height):
         for c in range(width):
-            #gradiant between blue and red
             color = (grid[c][l], grid[c][l], grid[c][l]) if args.do_gray_colors == True else (grid[c][l], 0, 255 - grid[c][l])
             pygame.draw.rect(
                 surface=screen,
@@ -166,16 +167,15 @@ def update() -> list:
     '''
     global grid, width, height
     grid_temp = [row[:] for row in grid]
-    for l in range(height):
-        for c in range(width):
-            if 0 < c < width - 1 and 0 < l < height - 1:
-                temp = 0
-                temp += grid[c - 1][l]
-                temp += grid[c + 1][l]
-                temp += grid[c][l - 1]
-                temp += grid[c][l + 1]
-                temp /= 4
-                grid_temp[c][l] = temp
+    for l in range(1, height - 1):
+        for c in range(1, width - 1):
+            temp = 0
+            temp += grid[c - 1][l]
+            temp += grid[c + 1][l]
+            temp += grid[c][l - 1]
+            temp += grid[c][l + 1]
+            temp /= 4
+            grid_temp[c][l] = temp
     return grid_temp
 
 def format_seconds(seconds: float) -> str:
@@ -183,6 +183,8 @@ def format_seconds(seconds: float) -> str:
     try:
         seconds = int(round(seconds))
     except Exception:
+        print(f"Erreur lors de la conversion du temps : {seconds} secondes. Valeur non convertible en nombre entier.")
+        print(Exception)
         return "--:--:--"
     hrs = seconds // 3600
     mins = (seconds % 3600) // 60
@@ -287,6 +289,8 @@ def iterate():
         "grid_list": []
     }
     cycle_start_time = time.monotonic_ns()
+    dt = 0
+    last_screen_update_time = time.monotonic_ns()
     while (iterations < (iterations_per_cycle)) and (running == True):
         if simulating == True:
             for event in pygame.event.get():
@@ -299,7 +303,12 @@ def iterate():
 
             iterations += 1
 
-            update_display()
+            if dt > 1 / screen_refresh_rate:
+                update_display()
+                dt = 0
+                last_screen_update_time = time.monotonic_ns()
+            else:
+                dt += (time.monotonic_ns() - last_screen_update_time) / 1_000_000_000
             grid = update()
             grid_list.append(copy.deepcopy(grid))
 
