@@ -155,16 +155,17 @@ all_data = {
     }
 }
 
-def update_display():
+def update_display(initial: bool = False) -> None:
     '''
     Met à jour l'affichage de la grille sur l'écran Pygame.
     '''
     global width, height, screen, grid, window_height, window_width, pixel_size, start_position_height, start_position_width
     start_position_height = (window_height - (height * pixel_size)) // 2
     start_position_width = (window_width - (width * pixel_size)) // 2
-    screen.fill(color=(255, 255, 255))
-    for l in range(height):
-        for c in range(width):
+    if initial == True:
+        screen.fill(color=(255, 255, 255))
+    for l in range(1 if initial == True else 0, (height - 1) if initial == True else height):
+        for c in range(1 if initial == True else 0, (width - 1) if initial == True else width):
             color = (grid[c][l], grid[c][l], grid[c][l]) if args.do_gray_colors == True else (grid[c][l], 0, 255 - grid[c][l])
             pygame.draw.rect(
                 surface=screen,
@@ -278,7 +279,7 @@ def iterate():
     grid = [[random.randint(0, 255) for l in range(int(height))] for c in range(int(width))]
     grid_list = []
     actual_time = 0
-    update_display()
+    update_display(initial=True)
     pygame.display.set_caption(display_caption_with_fixed_percentage())
 
     if args.do_wait_time == True:
@@ -334,7 +335,6 @@ def iterate():
 
             if args.do_save_data == True:
                 grid_list.append(copy.deepcopy(grid))
-
                 current_data["grid_list"] = grid_list
 
             if args.do_limit_fps == True:
