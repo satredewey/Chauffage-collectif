@@ -328,11 +328,14 @@ def iterate():
                 pygame.display.set_caption(display_caption_with_fixed_percentage())
                 dt = 0
 
+            
             grid = update()
-            grid_list.append(copy.deepcopy(grid))
-
             current_data["iterations"] = iterations
-            current_data["grid_list"] = grid_list
+
+            if args.do_save_data == True:
+                grid_list.append(copy.deepcopy(grid))
+
+                current_data["grid_list"] = grid_list
 
             if args.do_limit_fps == True:
                 clock.tick(float(args.fps))
@@ -350,7 +353,8 @@ def iterate():
                         iterations += 1
                         update_display()
                         grid = update()
-                        grid_list.append(copy.deepcopy(grid))
+                        if args.do_save_data == True:
+                            grid_list.append(copy.deepcopy(grid))
 
             cursor_position = pygame.mouse.get_pos()
             cursor_positioned_x = (cursor_position[0] - start_position_width) // pixel_size
