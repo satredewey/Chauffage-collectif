@@ -39,6 +39,7 @@ parser.add_argument('--wait_time', type=int, default=2, required=False)
 parser.add_argument('--fps', type=float, default=5, required=False)
 parser.add_argument('--do_ident', type=str2bool, default=True, required=False)
 parser.add_argument('--ident_size_spaces', type=int, default=4, required=False)
+parser.add_argument('--do_save_data', type=str2bool, default=True, required=False)
 parser.add_argument('--data_save_name', type=str, default="data.json", required=False)
 parser.add_argument('--do_display_percentage', type=str2bool, default=True, required=False)
 parser.add_argument('--percentage_precision', type=int, default=2, required=False)
@@ -119,7 +120,12 @@ pygame.display.set_caption("Chauffage collectif")
 window_height = screen.get_height()
 window_width = screen.get_width()
 clock = pygame.time.Clock()
-screen_refresh_rate = pygame.display.get_current_refresh_rate() if args.do_limit_display_fps_to_screen_fps == True else args.display_fps
+if args.do_limit_display_fps_to_screen_fps == True:
+    screen_refresh_rate = pygame.display.get_current_refresh_rate()
+elif args.do_limit_display_fps_to_screen_fps == False:
+    screen_refresh_rate = args.display_fps
+elif args.do_limit_display_fps_to_screen_fps >= args.fps:
+    screen_refresh_rate = args.fps
 if not screen_refresh_rate or screen_refresh_rate <= 0:
     screen_refresh_rate = 60
 print(f"Screen refresh rate: {screen_refresh_rate}Hz \n")
@@ -249,6 +255,8 @@ def check_json_is_valid(json_file: str) -> tuple[bool, str]:
 def save_data():
     '''Sauvegarde les données de la simulation dans un fichier JSON, en utilisant une indentation si spécifiée dans les arguments.'''
     global args, all_data, json
+    if args.do_save_data == False:
+        return
     os.system(f"del {args.data_save_name}")
 
     with open(f"{args.data_save_name}", "w") as f:
@@ -306,6 +314,8 @@ def iterate():
                     if event.key == pygame.K_LALT or event.key == pygame.K_RALT:
                         actual_time += time.monotonic_ns() - cycle_start_time
                         simulating = not simulating
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
 
             iterations += 1
 
@@ -315,18 +325,17 @@ def iterate():
 
             if dt >= 1 / screen_refresh_rate:
                 update_display()
+                pygame.display.set_caption(display_caption_with_fixed_percentage())
                 dt = 0
 
             grid = update()
             grid_list.append(copy.deepcopy(grid))
 
-            pygame.display.set_caption(display_caption_with_fixed_percentage())
+            current_data["iterations"] = iterations
+            current_data["grid_list"] = grid_list
 
             if args.do_limit_fps == True:
                 clock.tick(float(args.fps))
-
-            current_data["iterations"] = iterations
-            current_data["grid_list"] = grid_list
         else:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -335,7 +344,9 @@ def iterate():
                     if event.key == pygame.K_LALT or event.key == pygame.K_RALT:
                         cycle_start_time = time.monotonic_ns()
                         simulating = not simulating
-                    if event.key == pygame.K_SPACE:            
+                    if event.key == pygame.K_ESCAPE:
+                        running = False
+                    if event.key == pygame.K_SPACE:
                         iterations += 1
                         update_display()
                         grid = update()
@@ -427,6 +438,9 @@ save_data()
 
 print("\n\n")
 while True:
+    if args.do_save_data == False:
+        print("Données non sauvegardées car l'option '--do_save_data' est désactivée.")
+        break
     json_save_status = check_json_is_valid(json_file=str(args.data_save_name))
     if json_save_status[0] == True:
         print(f"Données correctement sauvegardées dans '{os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data_save_name)}'.")
