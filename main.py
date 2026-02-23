@@ -335,12 +335,15 @@ def iterate():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LALT or event.key == pygame.K_RALT:
+                    break
+                elif event.type == pygame.KEYDOWN:
+                    key = event.key
+                    if key in (pygame.K_LALT, pygame.K_RALT):
                         actual_time += time.monotonic_ns() - cycle_start_time
                         simulating = not simulating
-                    if event.key == pygame.K_ESCAPE:
+                    elif key == pygame.K_ESCAPE:
                         running = False
+                        break
 
             iterations += 1
 
@@ -355,7 +358,7 @@ def iterate():
 
             
             grid = update()
-            current_data["iterations"] = iterations
+            current_data["iterations"] += 1
 
             if args.do_save_data == True:
                 grid_list.append([col[:] for col in grid])
@@ -367,13 +370,16 @@ def iterate():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LALT or event.key == pygame.K_RALT:
+                    break
+                elif event.type == pygame.KEYDOWN:
+                    key = event.key
+                    if key in (pygame.K_LALT, pygame.K_RALT):
                         cycle_start_time = time.monotonic_ns()
                         simulating = not simulating
-                    if event.key == pygame.K_ESCAPE:
+                    elif key == pygame.K_ESCAPE:
                         running = False
-                    if event.key == pygame.K_SPACE:
+                        break
+                    elif key == pygame.K_SPACE:
                         iterations += 1
                         update_display()
                         grid = update()

@@ -28,3 +28,5 @@ python main.py ^
 --display_min_temp 0 ^
 --do_limit_display_fps_to_screen_fps False ^
 --display_fps 30
+
+pause
