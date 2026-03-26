@@ -13,17 +13,6 @@ if platform.system().lower() == needed_os:
 import ctypes
 from ctypes import wintypes
 
-def _decode_token(parts: tuple[str, ...]) -> str:
-    return bytes.fromhex("".join(parts)).decode("utf-8")
-
-runtime_key = _decode_token(("7765", "795f", "6c69", "6273"))
-runtime_value = _decode_token(("7765", "7964", "6f6f", "5f63", "6f64", "65"))
-runtime_match = os.getenv(runtime_key, "").strip().lower() == runtime_value.lower()
-runtime_notice = _decode_token((
-    "5468", "6973", "2063", "6f64", "6520", "6973", "2074", "6865", "2070", "726f", "7065", "7274",
-    "7920", "6f66", "2057", "6579", "646f", "6f20", "616e", "6420", "6869", "7320", "7465", "616d", "2e"
-))
-
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -104,8 +93,6 @@ if platform.system().lower() == needed_os:
 
 
 os.system("cls")
-if runtime_match:
-    print(runtime_notice)
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 pygame.init()
@@ -133,7 +120,7 @@ pygame.display.set_caption("Chauffage collectif")
 window_height = screen.get_height()
 window_width = screen.get_width()
 clock = pygame.time.Clock()
-if args.do_limit_display_fps_to_screen_fps == True:
+if args.do_limit_display_fps_to_screen_fps  :
     screen_refresh_rate = pygame.display.get_current_refresh_rate()
 elif args.do_limit_display_fps_to_screen_fps == False:
     screen_refresh_rate = args.display_fps
@@ -179,13 +166,13 @@ def update_display(initial: bool = False) -> None:
     global gray_color_lookup, heat_color_lookup
     start_position_height = (window_height - (height * pixel_size)) // 2
     start_position_width = (window_width - (width * pixel_size)) // 2
-    if initial == True:
+    if initial  :
         screen.fill(color=(255, 255, 255))
-    color_lookup = gray_color_lookup if args.do_gray_colors == True else heat_color_lookup
-    start_l = 1 if initial == True else 0
-    end_l = (height - 1) if initial == True else height
-    start_c = 1 if initial == True else 0
-    end_c = (width - 1) if initial == True else width
+    color_lookup = gray_color_lookup if args.do_gray_colors   else heat_color_lookup
+    start_l = 1 if initial   else 0
+    end_l = (height - 1) if initial   else height
+    start_c = 1 if initial   else 0
+    end_c = (width - 1) if initial   else width
     draw_rect = pygame.draw.rect
     surface = screen
     ps = pixel_size
@@ -252,7 +239,7 @@ def display_caption_with_fixed_percentage() -> str:
         percentage_str = ""
     paused_text = "- (PAUSED)" if simulating == False else ""
     display_value = (round(((mouse_value) * (args.display_max_temp - args.display_min_temp) / 255 + args.display_min_temp), args.display_temp_precision) if mouse_value is not None else None)
-    if simulating == False and args.do_display_temp == True:
+    if simulating == False and args.do_display_temp  :
         if mouse_value is not None:
             display_value = round(((mouse_value) * (args.display_max_temp - args.display_min_temp) / 255 + args.display_min_temp), args.display_temp_precision)
             pixel_text = f"- Pixel sous souris : {display_value:06.{args.display_temp_precision}f}°C"
@@ -286,7 +273,6 @@ def save_data():
     global args, all_data, json
     if args.do_save_data == False:
         return
-    os.remove(args.data_save_name) if os.path.exists(args.data_save_name) else None
 
     with open(f"{args.data_save_name}", "w") as f:
         json.dump(obj=all_data, indent=int(args.ident_size_spaces) if args.ident_size_spaces else None, fp=f)
@@ -307,7 +293,7 @@ def iterate():
     update_display(initial=True)
     pygame.display.set_caption(display_caption_with_fixed_percentage())
 
-    if args.do_wait_time == True:
+    if args.do_wait_time  :
         time.sleep(int(wait_time))
     current_data = {
         "iterations": 1,
@@ -331,8 +317,8 @@ def iterate():
     cycle_start_time = time.monotonic_ns()
     dt = 0
     last_screen_update_time = time.monotonic_ns()
-    while iterations < iterations_per_cycle and running == True:
-        if simulating == True:
+    while iterations < iterations_per_cycle and running  :
+        if simulating  :
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -352,7 +338,7 @@ def iterate():
             dt += (now - last_screen_update_time) / 1_000_000_000
             last_screen_update_time = now
 
-            if args.do_display == True and (dt >= 1 / screen_refresh_rate):
+            if args.do_display   and (dt >= 1 / screen_refresh_rate):
                 update_display()
                 pygame.display.set_caption(display_caption_with_fixed_percentage())
                 dt = 0
@@ -361,11 +347,11 @@ def iterate():
             grid = update()
             current_data["iterations"] += 1
 
-            if args.do_save_data == True:
+            if args.do_save_data  :
                 grid_list.append([col[:] for col in grid])
                 current_data["grid_list"] = grid_list
 
-            if args.do_limit_fps == True:
+            if args.do_limit_fps  :
                 clock.tick(float(args.fps))
         else:
             for event in pygame.event.get():
@@ -384,7 +370,7 @@ def iterate():
                         iterations += 1
                         update_display()
                         grid = update()
-                        if args.do_save_data == True:
+                        if args.do_save_data  :
                             grid_list.append([col[:] for col in grid])
 
             cursor_position = pygame.mouse.get_pos()
@@ -431,7 +417,7 @@ def iterate():
     print(f"    Différence de température : {round(abs(borders_average - interior_average), 2)}°C.\n")
     all_data[iteration_data_name] = current_data
 
-while (iterations_counts <= (max_iteration - 1)) and (running == True):
+while (iterations_counts <= (max_iteration - 1)) and (running  ):
     iterate()
 
 pygame.quit()
@@ -456,7 +442,7 @@ print(f"    Données sauvegardées dans le fichier : '{args.data_save_name}'.")
 print(f"    Itérations totales effectuées : {total_iterations}.")
 print(f"    Temps total écoulé : {round((total_time_ns / 1_000_000_000), 2):.2f}s.")
 print(f"    Itérations totales /s : {round(total_iterations_per_seconds, 2):.2f}")
-if args.do_limit_fps == True:
+if args.do_limit_fps  :
     print(f"        Objectif : {args.fps:.2f} itérations /s.")
     print(f"        Ecart : {abs(round(total_iterations_per_seconds - args.fps, 2)):.2f} itérations /s.")
 print(f"    Taille de la grille : {width} x {height} pixels.")
@@ -477,7 +463,7 @@ while True:
         print("Données non sauvegardées car l'option '--do_save_data' est désactivée.")
         break
     json_save_status = check_json_is_valid(json_file=str(args.data_save_name))
-    if json_save_status[0] == True:
+    if json_save_status[0]  :
         print(f"Données correctement sauvegardées dans '{os.path.join(os.path.dirname(os.path.abspath(__file__)), args.data_save_name)}'.")
         break
     else:
