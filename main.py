@@ -61,6 +61,7 @@ parser.add_argument('--display_min_temp', type=int, default=0, required=False)
 parser.add_argument('--do_limit_fps', type=str2bool, default=True, required=False)
 parser.add_argument('--do_limit_display_fps_to_screen_fps', type=str2bool, default=True, required=False)
 parser.add_argument('--display_fps', type=float, default=30, required=False)
+parser.add_argument('--do_display', type=str2bool, default=True, required=False)
 
 args = parser.parse_args()
 
@@ -351,7 +352,7 @@ def iterate():
             dt += (now - last_screen_update_time) / 1_000_000_000
             last_screen_update_time = now
 
-            if dt >= 1 / screen_refresh_rate:
+            if args.do_display == True and (dt >= 1 / screen_refresh_rate):
                 update_display()
                 pygame.display.set_caption(display_caption_with_fixed_percentage())
                 dt = 0
