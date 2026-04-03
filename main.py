@@ -51,6 +51,7 @@ parser.add_argument('--do_limit_fps', type=str2bool, default=True, required=Fals
 parser.add_argument('--do_limit_display_fps_to_screen_fps', type=str2bool, default=True, required=False)
 parser.add_argument('--display_fps', type=float, default=30, required=False)
 parser.add_argument('--do_display', type=str2bool, default=True, required=False)
+parser.add_argument('--load_grid_from_file', type=str, default=None, required=False)
 
 args = parser.parse_args()
 
@@ -158,6 +159,16 @@ all_data = {
 gray_color_lookup = [(i, i, i) for i in range(256)]
 heat_color_lookup = [(i, 0, 255 - i) for i in range(256)]
 
+def transpose_grid(source_grid: list) -> list:
+    '''
+    Convertit une grille au format lignes -> colonnes utilisé en interne.
+    '''
+    if not source_grid:
+        return []
+    if any(len(row) != len(source_grid[0]) for row in source_grid):
+        raise ValueError("Loaded grid must be rectangular.")
+    return [list(column) for column in zip(*source_grid)]
+
 def update_display(initial: bool = False) -> None:
     '''
     Met à jour l'affichage de la grille sur l'écran Pygame.
@@ -165,18 +176,19 @@ def update_display(initial: bool = False) -> None:
     global width, height, screen, grid, window_height, window_width, pixel_size, start_position_height, start_position_width
     global gray_color_lookup, heat_color_lookup
     start_position_height = (window_height - (height * pixel_size)) // 2
-    start_position_width = (window_width - (width * pixel_size)) // 2
-    if initial  :
-        screen.fill(color=(255, 255, 255))
+    start_position_width = (window_width - (width * pixel_size)) // 2              
     color_lookup = gray_color_lookup if args.do_gray_colors   else heat_color_lookup
-    start_l = 1 if initial   else 0
-    end_l = (height - 1) if initial   else height
-    start_c = 1 if initial   else 0
-    end_c = (width - 1) if initial   else width
+    start_l = 0
+    end_l = height
+    start_c = 0
+    end_c = width
     draw_rect = pygame.draw.rect
     surface = screen
     ps = pixel_size
     y = start_position_height + (start_l * ps)
+    if initial:
+        screen.fill(color=(255, 255, 255))
+
     for l in range(start_l, end_l):
         x = start_position_width + (start_c * ps)
         for c in range(start_c, end_c):
@@ -274,8 +286,17 @@ def save_data():
     if args.do_save_data == False:
         return
 
+    data_to_save = copy.deepcopy(all_data)
+    for cycle_data in data_to_save.values():
+        if not isinstance(cycle_data, dict):
+            continue
+        if "initial_grid" in cycle_data and isinstance(cycle_data["initial_grid"], list):
+            cycle_data["initial_grid"] = transpose_grid(cycle_data["initial_grid"])
+        if "grid_list" in cycle_data and isinstance(cycle_data["grid_list"], list):
+            cycle_data["grid_list"] = [transpose_grid(grid_state) for grid_state in cycle_data["grid_list"]]
+
     with open(f"{args.data_save_name}", "w") as f:
-        json.dump(obj=all_data, indent=int(args.ident_size_spaces) if args.ident_size_spaces else None, fp=f)
+        json.dump(obj=data_to_save, indent=int(args.ident_size_spaces) if args.ident_size_spaces else None, fp=f)
 
 
 
@@ -287,13 +308,23 @@ def iterate():
     global height, width, all_data, clock, screen, running, grid, iterations, iterations_per_cycle, iterations_counts, simulating, start_position_height, start_position_width, mouse_value, actual_time
     iterations_counts += 1
     iterations = 0
-    grid = [[random.randint(0, 255) for l in range(int(height))] for c in range(int(width))]
+    if args.load_grid_from_file not in ["None", None]:
+        print(f"Initial data loaded from file: {args.load_grid_from_file}")
+        with open(file=args.load_grid_from_file,mode="r") as file:
+            data_loaded = json.load(file)
+            if "initial_grid" in data_loaded:
+                grid = transpose_grid(data_loaded["initial_grid"])
+                if not grid or not grid[0]:
+                    raise ValueError("Loaded grid is empty or malformed.")
+                width = len(grid)
+                height = len(grid[0])
+    else:
+        grid = [[random.randint(0, 255) for l in range(int(height))] for c in range(int(width))]
     grid_list = []
     actual_time = 0
-    update_display(initial=True)
     pygame.display.set_caption(display_caption_with_fixed_percentage())
 
-    if args.do_wait_time  :
+    if args.do_wait_time:
         time.sleep(int(wait_time))
     current_data = {
         "iterations": 1,
@@ -316,6 +347,7 @@ def iterate():
     }
     cycle_start_time = time.monotonic_ns()
     dt = 0
+    update_display(initial=True)
     last_screen_update_time = time.monotonic_ns()
     while iterations < iterations_per_cycle and running  :
         if simulating  :
@@ -332,20 +364,18 @@ def iterate():
                         running = False
                         break
 
-            iterations += 1
-
             now = time.monotonic_ns()
             dt += (now - last_screen_update_time) / 1_000_000_000
             last_screen_update_time = now
 
-            if args.do_display   and (dt >= 1 / screen_refresh_rate):
+            grid = update()
+            iterations += 1
+            current_data["iterations"] += 1
+
+            if args.do_display and (dt >= 1 / screen_refresh_rate or iterations == 1):
                 update_display()
                 pygame.display.set_caption(display_caption_with_fixed_percentage())
                 dt = 0
-
-            
-            grid = update()
-            current_data["iterations"] += 1
 
             if args.do_save_data  :
                 grid_list.append([col[:] for col in grid])
@@ -368,8 +398,8 @@ def iterate():
                         break
                     elif key == pygame.K_SPACE:
                         iterations += 1
-                        update_display()
                         grid = update()
+                        update_display()
                         if args.do_save_data  :
                             grid_list.append([col[:] for col in grid])
 

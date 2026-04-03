@@ -11,10 +11,10 @@ python main.py ^
 --do_auto_resize_pixels True ^
 --iterations_per_cycle 200000 ^
 --max_iteration 5 ^
---do_wait_time False ^
+--do_wait_time True ^
 --wait_time 2 ^
---do_limit_fps False ^
---fps 50 ^
+--do_limit_fps True ^
+--fps 5 ^
 --do_ident True ^
 --ident_size_spaces 4 ^
 --do_save_data False ^
@@ -28,6 +28,7 @@ python main.py ^
 --display_min_temp 0 ^
 --do_limit_display_fps_to_screen_fps False ^
 --display_fps 30 ^
---do_display True
+--do_display True ^
+--load_grid_from_file "load.json"
 
 pause
