@@ -29,6 +29,6 @@ python main.py ^
 --do_limit_display_fps_to_screen_fps False ^
 --display_fps 30 ^
 --do_display True ^
---load_grid_from_file "load.json"
+--load_grid_from_file "None"
 
 pause
