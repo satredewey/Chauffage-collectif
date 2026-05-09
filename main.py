@@ -12,6 +12,7 @@ if platform.system().lower() == needed_os:
     import win32con # type: ignore
 import ctypes
 from ctypes import wintypes
+from functools import lru_cache
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -93,7 +94,7 @@ if platform.system().lower() == needed_os:
 
 
 
-os.system("cls")
+os.system("cls" if os.name == "nt" else "clear")
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "1"
 
 pygame.init()
@@ -197,6 +198,7 @@ def update_display(initial: bool = False) -> None:
         y += ps
     pygame.display.flip()
 
+@lru_cache(maxsize=None)
 def update() -> list:
     '''
     Met à jour la grille en calculant la nouvelle valeur de chaque cellule en fonction de la moyenne des valeurs de ses voisins immédiats.
